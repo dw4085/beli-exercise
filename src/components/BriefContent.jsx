@@ -51,21 +51,6 @@ export default function BriefContent({ act, animKey }) {
         <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "13px", color: act.muted, fontStyle: "italic", marginTop: "8px", opacity: 0.7 }}>{act.scoring}</div>
       </div>
 
-      {/* Slide */}
-      <div style={{ padding: "22px 36px 0" }}>
-        <div style={{ border: `2px dashed ${act.border}`, borderRadius: "10px", padding: "22px", background: act.cardBg, boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: act.accent, marginBottom: "12px", fontWeight: 600 }}>Your One-Slide Presentation Must Include</div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {act.slide.map((s, i) => (
-              <div key={i} style={{ flex: "1", minWidth: "180px", background: act.contentBg, border: `1px solid ${act.border}`, borderRadius: "8px", padding: "13px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <div style={{ minWidth: "22px", height: "22px", borderRadius: "5px", background: act.accent, color: "#fff", fontSize: "11px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif" }}>{i + 1}</div>
-                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "14.5px", color: "#222", lineHeight: "1.5" }}>{s}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "13px", color: act.muted, fontStyle: "italic", marginTop: "12px", opacity: 0.6 }}>Groups presenting should be ready to share their slide in under 3 minutes.</div>
-        </div>
-      </div>
     </div>
   );
 }
