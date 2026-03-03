@@ -58,18 +58,25 @@ export default function LoginScreen({ onLogin }) {
 
   return (
     <div style={{ fontFamily: "Georgia, serif", minHeight: "100vh", background: "#F8F6F1" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');
+        @media (max-width: 768px) {
+          .login-header { padding: 16px !important; }
+          .login-body { padding: 20px !important; }
+          .login-card { padding: 24px !important; }
+        }
+      `}</style>
 
       {/* Header */}
-      <div style={{ background: "linear-gradient(140deg, #0D2B24 0%, #1a1a2e 65%)", padding: "20px 36px" }}>
+      <div className="login-header" style={{ background: "linear-gradient(140deg, #0D2B24 0%, #1a1a2e 65%)", padding: "20px 36px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.65)", letterSpacing: "0.02em" }}>Columbia Business School</span>
           <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "22px", fontWeight: 700, color: "rgba(255,255,255,0.65)" }}>beli</span>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 62px)", padding: "40px" }}>
-        <div style={{ width: "100%", maxWidth: "380px", background: "#fff", borderRadius: "12px", border: `1px solid ${act.border}`, padding: "36px", boxShadow: "0 4px 30px rgba(0,0,0,0.08)" }}>
+      <div className="login-body" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 62px)", padding: "40px" }}>
+        <div className="login-card" style={{ width: "100%", maxWidth: "380px", background: "#fff", borderRadius: "12px", border: `1px solid ${act.border}`, padding: "36px", boxShadow: "0 4px 30px rgba(0,0,0,0.08)" }}>
           <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: `${act.accent}15`, border: `1px solid ${act.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", marginBottom: "18px" }}>👤</div>
           <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "22px", fontWeight: 700, color: "#111", margin: "0 0 6px" }}>Welcome to the Beli Exercise</h2>
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "13px", color: act.muted, lineHeight: "1.6", margin: "0 0 24px" }}>Enter your name and section password to begin.</p>

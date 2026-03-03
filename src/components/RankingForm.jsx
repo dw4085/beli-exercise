@@ -126,7 +126,7 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
   options.forEach(o => { optionMap[o.name] = o; });
 
   return (
-    <div style={{ padding: "22px 36px 0" }}>
+    <div className="ranking-wrap" style={{ padding: "22px 36px 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
         <div style={{ height: "1px", flex: 1, background: act.border }} />
         <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: act.muted, whiteSpace: "nowrap", fontWeight: 600 }}>
@@ -135,7 +135,7 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
         <div style={{ height: "1px", flex: 1, background: act.border }} />
       </div>
 
-      <div style={{ background: act.cardBg, border: `1px solid ${act.border}`, borderRadius: "10px", padding: "20px", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+      <div className="ranking-box" style={{ background: act.cardBg, border: `1px solid ${act.border}`, borderRadius: "10px", padding: "20px", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
         <div style={{ display: "grid", gap: `${GAP}px`, position: "relative" }}>
           {order.map((name, i) => {
             const o = optionMap[name];
@@ -145,12 +145,13 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
               <div
                 key={name}
                 ref={el => { rowRefs.current[name] = el; }}
+                className="ranking-row"
                 style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: act.contentBg, border: `1px solid ${act.border}`, borderRadius: "8px", position: "relative" }}
               >
                 <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "16px", fontWeight: 700, color: act.accent, minWidth: "24px", textAlign: "center" }}>
                   {i + 1}
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <div className="ranking-arrows" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                   <button
                     onClick={() => move(i, -1)}
                     disabled={isFirst || animating}

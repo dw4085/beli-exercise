@@ -8,9 +8,9 @@ export default function Hero({ active, onSwitchTab, hideTabs }) {
       <div style={{ position:"absolute", right:"-10px", top:"-30px", fontFamily:"'Playfair Display',serif", fontSize:"240px", fontWeight:900, color:"rgba(255,255,255,0.025)", lineHeight:1, userSelect:"none", pointerEvents:"none" }}>{act.num}</div>
 
       {/* Top bar */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 36px 0" }}>
+      <div className="hero-top" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 36px 0" }}>
         <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:600, color:"rgba(255,255,255,0.65)", letterSpacing:"0.02em" }}>Columbia Business School</span>
-        <div style={{ display:"flex", alignItems:"center", gap:"10px", background:"rgba(255,255,255,0.07)", padding:"6px 16px", borderRadius:"40px", border:"1px solid rgba(255,255,255,0.1)" }}>
+        <div className="hero-badge" style={{ display:"flex", alignItems:"center", gap:"10px", background:"rgba(255,255,255,0.07)", padding:"6px 16px", borderRadius:"40px", border:"1px solid rgba(255,255,255,0.1)" }}>
           <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"10px", letterSpacing:"0.16em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)" }}>Technology Strategy @ CBS</span>
           <div style={{ width:"1px", height:"12px", background:"rgba(255,255,255,0.2)" }} />
           <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"10px", letterSpacing:"0.16em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)" }}>Spring 2026</span>
@@ -19,7 +19,7 @@ export default function Hero({ active, onSwitchTab, hideTabs }) {
       </div>
 
       {/* Title */}
-      <div style={{ padding:"26px 36px 0" }}>
+      <div className="hero-title" style={{ padding:"26px 36px 0" }}>
         <div style={{ display:"inline-block", background:`${act.accent}30`, border:`1px solid ${act.accent}60`, color:act.heroLight, fontFamily:"'DM Sans',sans-serif", fontSize:"10px", letterSpacing:"0.16em", textTransform:"uppercase", padding:"4px 12px", borderRadius:"20px", fontWeight:600, marginBottom:"12px" }}>{act.tag}</div>
         <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(26px,4vw,48px)", fontWeight:900, color:"#fff", lineHeight:1.1, letterSpacing:"-0.02em", margin:0 }}>
           <span style={{ color:act.heroLight, opacity:0.4, fontSize:"0.5em", verticalAlign:"middle", marginRight:"10px" }}>{act.num}</span>
@@ -29,7 +29,7 @@ export default function Hero({ active, onSwitchTab, hideTabs }) {
       </div>
 
       {/* Tabs + case link */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent: hideTabs ? "flex-end" : "space-between", marginTop:"22px", borderBottom:"1px solid rgba(255,255,255,0.07)", padding: hideTabs ? "0 36px 0 28px" : "0 36px 0 0" }}>
+      <div className="hero-bottom" style={{ display:"flex", alignItems:"center", justifyContent: hideTabs ? "flex-end" : "space-between", marginTop:"22px", borderBottom:"1px solid rgba(255,255,255,0.07)", padding: hideTabs ? "0 36px 0 28px" : "0 36px 0 0" }}>
         {!hideTabs && (
           <div style={{ display:"flex", paddingLeft:"28px" }}>
             {ACTIVITIES.map((a, i) => (

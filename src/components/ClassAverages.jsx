@@ -47,7 +47,7 @@ export default function ClassAverages({ act, section }) {
   const maxRank = act.options.length;
 
   return (
-    <div style={{ padding: "22px 36px 0" }}>
+    <div className="avg-wrap" style={{ padding: "22px 36px 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
         <div style={{ height: "1px", flex: 1, background: act.border }} />
         <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: act.muted, whiteSpace: "nowrap", fontWeight: 600 }}>
@@ -60,11 +60,11 @@ export default function ClassAverages({ act, section }) {
         {sorted.map(([name, avg], i) => {
           const pct = ((maxRank - avg) / (maxRank - 1)) * 100;
           return (
-            <div key={name} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: i < sorted.length - 1 ? "10px" : 0 }}>
-              <div style={{ width: "24px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 700, color: act.accent, textAlign: "center" }}>
+            <div key={name} className="avg-row" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: i < sorted.length - 1 ? "10px" : 0 }}>
+              <div className="avg-rank" style={{ width: "24px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 700, color: act.accent, textAlign: "center" }}>
                 {i + 1}
               </div>
-              <div style={{ width: "160px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600, color: "#111", flexShrink: 0 }}>{name}</div>
+              <div className="avg-label" style={{ width: "160px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600, color: "#111", flexShrink: 0 }}>{name}</div>
               <div style={{ flex: 1, background: act.contentBg, borderRadius: "4px", height: "20px", overflow: "hidden", border: `1px solid ${act.border}` }}>
                 <div style={{ width: `${Math.max(pct, 5)}%`, height: "100%", background: act.accent, borderRadius: "4px", transition: "width 0.5s ease" }} />
               </div>
