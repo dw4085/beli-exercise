@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { supabase } from "../supabaseClient";
 
 const ANIM_MS = 250;
 const GAP = 6; // must match the grid gap in px
@@ -19,12 +18,10 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
-          .from("submissions")
-          .select("rankings")
-          .eq("student_id", studentId)
-          .eq("section", section)
-          .single();
+        const params = new URLSearchParams({ section, student_id: studentId });
+        const res = await fetch(`/api/submissions?${params}`);
+        if (!res.ok) return;
+        const { submission: data } = await res.json();
 
         if (data?.rankings) {
           const sorted = Object.entries(data.rankings)
@@ -105,13 +102,12 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
     setSaving(true);
     setError("");
     try {
-      const { error: dbError } = await supabase
-        .from("submissions")
-        .upsert(
-          { student_id: studentId, section, rankings: toRankings() },
-          { onConflict: "student_id,section" }
-        );
-      if (dbError) throw dbError;
+      const res = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId, section, rankings: toRankings() }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSubmitted(true);
       onSubmitted(true);
     } catch (err) {

@@ -15,9 +15,12 @@ cd beli-app
 # 2. Install dependencies (only needed once)
 npm install
 
-# 3. Start the app
-npm start
+# 3. Start the app (frontend + /api functions; needs the Vercel CLI and a
+#    .env file with DATABASE_URL pointing at the Neon database)
+vercel dev
 ```
+
+`npm start` also works for the frontend alone, but logins and rankings need the `/api` functions.
 
 The app will open automatically at http://localhost:3000
 

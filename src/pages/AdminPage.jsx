@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { ACTIVITIES } from "../data/activities";
-import { supabase } from "../supabaseClient";
 
 const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || "BELIADMIN";
 
@@ -10,7 +9,8 @@ function AdminLogin({ onAuth }) {
 
   const submit = () => {
     if (pw.trim().toUpperCase() === ADMIN_PASSWORD.toUpperCase()) {
-      sessionStorage.setItem("beli_admin", "1");
+      // Kept for the session so admin API calls can send it
+      sessionStorage.setItem("beli_admin_pw", pw.trim());
       onAuth();
     } else {
       setError(true);
@@ -78,7 +78,7 @@ function NameWithTooltip({ name, rankings, act, font }) {
 }
 
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem("beli_admin") === "1");
+  const [authed, setAuthed] = useState(() => !!sessionStorage.getItem("beli_admin_pw"));
   const [activeSection, setActiveSection] = useState(0);
   const [activeView, setActiveView] = useState("analysis");
   const [submissions, setSubmissions] = useState([]);
@@ -89,15 +89,20 @@ export default function AdminPage() {
 
   const act = ACTIVITIES[activeSection];
 
+  const adminFetch = (url, options = {}) =>
+    fetch(url, { ...options, headers: { ...options.headers, "x-admin-password": sessionStorage.getItem("beli_admin_pw") || "" } });
+
+  const signOut = () => { sessionStorage.removeItem("beli_admin_pw"); setAuthed(false); };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [subRes, stuRes] = await Promise.all([
-        supabase.from("submissions").select("*"),
-        supabase.from("students").select("*"),
-      ]);
-      if (subRes.data) setSubmissions(subRes.data);
-      if (stuRes.data) setStudents(stuRes.data);
+      const res = await adminFetch("/api/admin");
+      if (res.status === 401) { signOut(); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setSubmissions(data.submissions);
+      setStudents(data.students);
     } catch (err) {
       console.error("Admin fetch error:", err);
     } finally {
@@ -109,10 +114,9 @@ export default function AdminPage() {
     setClearing(true);
     try {
       const section = act.section;
-      // Delete submissions for this section first (FK constraint)
-      await supabase.from("submissions").delete().eq("section", section);
-      // Delete students for this section
-      await supabase.from("students").delete().eq("section", section);
+      // Deletes the section's submissions, then its students
+      const res = await adminFetch(`/api/admin?${new URLSearchParams({ section })}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await fetchData();
     } catch (err) {
       console.error("Clear error:", err);
@@ -212,7 +216,7 @@ export default function AdminPage() {
             <button onClick={fetchData} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", cursor: "pointer" }}>
               Refresh
             </button>
-            <button onClick={() => { sessionStorage.removeItem("beli_admin"); setAuthed(false); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", cursor: "pointer" }}>
+            <button onClick={signOut} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", cursor: "pointer" }}>
               Sign Out
             </button>
           </div>
