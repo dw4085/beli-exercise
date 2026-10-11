@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
 
 export default function ClassAverages({ act, section }) {
   const [averages, setAverages] = useState(null);
@@ -7,12 +6,9 @@ export default function ClassAverages({ act, section }) {
 
   const fetchAverages = async () => {
     try {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select("rankings")
-        .eq("section", section);
-
-      if (error) throw error;
+      const res = await fetch(`/api/submissions?${new URLSearchParams({ section })}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { submissions: data } = await res.json();
       if (!data || data.length === 0) { setAverages(null); setCount(0); return; }
 
       setCount(data.length);

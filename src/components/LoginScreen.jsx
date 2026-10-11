@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { PASSWORDS, ACTIVITIES } from "../data/activities";
-import { supabase } from "../supabaseClient";
 
 export default function LoginScreen({ onLogin }) {
   const [name, setName] = useState("");
@@ -23,24 +22,14 @@ export default function LoginScreen({ onLogin }) {
     setError("");
 
     try {
-      // Try to find existing student first
-      let { data } = await supabase
-        .from("students")
-        .select("*")
-        .eq("name", trimmedName)
-        .eq("section", section)
-        .single();
-
-      // If not found, insert new student
-      if (!data) {
-        const { data: newStudent, error: insertErr } = await supabase
-          .from("students")
-          .insert({ name: trimmedName, section })
-          .select()
-          .single();
-        if (insertErr) throw insertErr;
-        data = newStudent;
-      }
+      // Find or create the student
+      const res = await fetch("/api/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName, section }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { student: data } = await res.json();
 
       const session = { studentId: data.id, name: trimmedName, section };
       localStorage.setItem("beli_session", JSON.stringify(session));
