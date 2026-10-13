@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../lib/hub";
 
 export default function ClassAverages({ act, section }) {
   const [averages, setAverages] = useState(null);
@@ -6,7 +7,7 @@ export default function ClassAverages({ act, section }) {
 
   const fetchAverages = async () => {
     try {
-      const res = await fetch(`/api/submissions?${new URLSearchParams({ section })}`);
+      const res = await apiFetch(`/api/submissions?${new URLSearchParams({ section })}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { submissions: data } = await res.json();
       if (!data || data.length === 0) { setAverages(null); setCount(0); return; }

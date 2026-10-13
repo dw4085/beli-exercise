@@ -1,40 +1,58 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ACTIVITIES } from "../data/activities";
-import LoginScreen from "../components/LoginScreen";
+import { useHubUser, apiFetch, hubHome } from "../lib/hub";
+import HubStatus from "../components/HubStatus";
+import SectionPicker from "../components/SectionPicker";
 import Hero from "../components/Hero";
 import BriefContent from "../components/BriefContent";
 import RankingForm from "../components/RankingForm";
 import ClassAverages from "../components/ClassAverages";
 
 export default function StudentPage() {
-  const [session, setSession] = useState(() => {
-    try {
-      const saved = localStorage.getItem("beli_session");
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const { user, error: hubError } = useHubUser();
+  // { name, section, staff } from /api/students; section comes from the class roster, or is
+  // chosen once by the student; instructors and TAs may view any section.
+  const [info, setInfo] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [params, setParams] = useSearchParams();
 
   const [key, setKey] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const handleLogin = (sess) => {
-    setSession(sess);
-    setKey(k => k + 1);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("beli_session");
-    setSession(null);
-    setHasSubmitted(false);
-  };
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const res = await apiFetch("/api/students");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setInfo(await res.json());
+      } catch (err) {
+        console.error("Load error:", err);
+        setLoadError(true);
+      }
+    })();
+  }, [user]);
 
   const onSubmitted = useCallback((val) => setHasSubmitted(val), []);
 
-  if (!session) return <LoginScreen onLogin={handleLogin} />;
+  if (hubError || loadError) return <HubStatus title="Can't load the exercise" message="Could not connect to the server. Please refresh the page." />;
+  if (!user || !info) return <HubStatus message="Loading..." />;
+  if (!info.staff && !info.section) return <SectionPicker name={info.name} onPicked={setInfo} />;
 
-  // Lock to the student's own section only
-  const sectionIndex = ACTIVITIES.findIndex(a => a.section === session.section);
-  const act = ACTIVITIES[sectionIndex >= 0 ? sectionIndex : 0];
+  // Students are locked to their own section. Staff pick a section with the tabs (?section=)
+  // and can open a student's ranking read-only from the class activity log (?student=).
+  const wanted = info.staff ? params.get("section") || info.section : info.section;
+  const found = ACTIVITIES.findIndex(a => a.section === wanted);
+  const sectionIndex = found >= 0 ? found : 0;
+  const act = ACTIVITIES[sectionIndex];
+  const viewStudent = info.staff && params.get("student") && params.get("student") !== user.id ? params.get("student") : null;
+
+  const switchSection = (i) => {
+    setParams({ section: ACTIVITIES[i].section });
+    setHasSubmitted(false);
+    setKey(k => k + 1);
+  };
 
   return (
     <div style={{ fontFamily: "Georgia, serif", minHeight: "100vh", background: "#F8F6F1" }}>
@@ -80,25 +98,33 @@ export default function StudentPage() {
       {/* Session bar */}
       <div className="session-bar" style={{ background: "#1a1a2e", padding: "8px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
         <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
-          Signed in as <strong style={{ color: "rgba(255,255,255,0.9)" }}>{session.name}</strong> · {session.section}
+          Signed in as <strong style={{ color: "rgba(255,255,255,0.9)" }}>{info.name}</strong> · {info.staff ? "Instructor view" : act.section}
         </span>
-        <button onClick={handleLogout} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans',sans-serif", fontSize: "11px", padding: "4px 12px", borderRadius: "4px", cursor: "pointer" }}>
-          Sign Out
-        </button>
+        <span style={{ display: "flex", gap: "8px" }}>
+          {info.staff && (
+            <a href="/admin" style={{ border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans',sans-serif", fontSize: "11px", padding: "4px 12px", borderRadius: "4px", textDecoration: "none" }}>
+              Admin
+            </a>
+          )}
+          <a href={hubHome} style={{ border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans',sans-serif", fontSize: "11px", padding: "4px 12px", borderRadius: "4px", textDecoration: "none" }}>
+            Class hub
+          </a>
+        </span>
       </div>
 
-      <Hero active={sectionIndex} hideTabs />
+      <Hero active={sectionIndex} hideTabs={!info.staff} onSwitchTab={switchSection} />
 
       <BriefContent act={act} animKey={key} />
 
       <RankingForm
+        key={`${act.section}:${viewStudent || ""}`}
         act={act}
-        studentId={session.studentId}
-        section={session.section}
+        section={act.section}
+        viewStudent={viewStudent}
         onSubmitted={onSubmitted}
       />
-      {hasSubmitted && (
-        <ClassAverages act={act} section={session.section} />
+      {(hasSubmitted || info.staff) && (
+        <ClassAverages act={act} section={act.section} />
       )}
 
       {/* Bottom padding */}

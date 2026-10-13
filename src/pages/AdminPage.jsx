@@ -1,43 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ACTIVITIES } from "../data/activities";
-
-const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || "BELIADMIN";
-
-function AdminLogin({ onAuth }) {
-  const [pw, setPw] = useState("");
-  const [error, setError] = useState(false);
-
-  const submit = () => {
-    if (pw.trim().toUpperCase() === ADMIN_PASSWORD.toUpperCase()) {
-      // Kept for the session so admin API calls can send it
-      sessionStorage.setItem("beli_admin_pw", pw.trim());
-      onAuth();
-    } else {
-      setError(true);
-    }
-  };
-
-  return (
-    <div style={{ fontFamily: "Georgia, serif", minHeight: "100vh", background: "#F8F6F1" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "40px" }}>
-        <div style={{ width: "100%", maxWidth: "360px", background: "#fff", borderRadius: "12px", border: "1px solid #ddd", padding: "32px", boxShadow: "0 4px 30px rgba(0,0,0,0.08)" }}>
-          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "19px", fontWeight: 700, color: "#111", margin: "0 0 8px" }}>Admin Dashboard</h2>
-          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "13px", color: "#666", lineHeight: "1.6", margin: "0 0 22px" }}>Enter the admin password to continue.</p>
-          <input type="password" placeholder="Admin password" value={pw}
-            onChange={e => { setPw(e.target.value); setError(false); }}
-            onKeyDown={e => e.key === "Enter" && submit()}
-            style={{ width: "100%", padding: "10px 13px", fontSize: "14px", background: "#fafafa", color: "#111", border: `1px solid ${error ? "#e05555" : "#ddd"}`, borderRadius: "7px", outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: "8px", boxSizing: "border-box" }}
-          />
-          {error && <p style={{ fontFamily: "'DM Sans',sans-serif", color: "#e05555", fontSize: "12px", margin: "0 0 8px" }}>Incorrect password.</p>}
-          <button onClick={submit} style={{ width: "100%", padding: "11px", fontSize: "12px", fontWeight: 600, background: "#333", color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "4px" }}>
-            Enter →
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { useHubUser, isStaff, apiFetch, hubHome } from "../lib/hub";
+import HubStatus from "../components/HubStatus";
+import HubOutboxPanel from "../components/HubOutboxPanel";
 
 function NameWithTooltip({ name, rankings, act, font }) {
   const [show, setShow] = useState(false);
@@ -78,7 +43,9 @@ function NameWithTooltip({ name, rankings, act, font }) {
 }
 
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(() => !!sessionStorage.getItem("beli_admin_pw"));
+  // Instructors and TAs only (class hub roles); the /api functions check again.
+  const { user, error: hubError } = useHubUser();
+  const authed = isStaff(user);
   const [activeSection, setActiveSection] = useState(0);
   const [activeView, setActiveView] = useState("analysis");
   const [submissions, setSubmissions] = useState([]);
@@ -89,16 +56,10 @@ export default function AdminPage() {
 
   const act = ACTIVITIES[activeSection];
 
-  const adminFetch = (url, options = {}) =>
-    fetch(url, { ...options, headers: { ...options.headers, "x-admin-password": sessionStorage.getItem("beli_admin_pw") || "" } });
-
-  const signOut = () => { sessionStorage.removeItem("beli_admin_pw"); setAuthed(false); };
-
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await adminFetch("/api/admin");
-      if (res.status === 401) { signOut(); return; }
+      const res = await apiFetch("/api/admin");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setSubmissions(data.submissions);
@@ -115,7 +76,7 @@ export default function AdminPage() {
     try {
       const section = act.section;
       // Deletes the section's submissions, then its students
-      const res = await adminFetch(`/api/admin?${new URLSearchParams({ section })}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/admin?${new URLSearchParams({ section })}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await fetchData();
     } catch (err) {
@@ -130,7 +91,9 @@ export default function AdminPage() {
     if (authed) fetchData();
   }, [authed]); // eslint-disable-line
 
-  if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />;
+  if (hubError) return <HubStatus title="Can't reach the class hub" message="Please refresh the page." />;
+  if (!user) return <HubStatus message="Loading..." />;
+  if (!authed) return <HubStatus title="Instructors only" message="The Beli admin dashboard is for instructors and TAs." showHubLink />;
 
   const section = act.section;
   const sectionSubs = submissions.filter(s => s.section === section);
@@ -216,9 +179,12 @@ export default function AdminPage() {
             <button onClick={fetchData} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", cursor: "pointer" }}>
               Refresh
             </button>
-            <button onClick={signOut} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", cursor: "pointer" }}>
-              Sign Out
-            </button>
+            <a href="/" style={{ border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", textDecoration: "none" }}>
+              Student View
+            </a>
+            <a href={hubHome} style={{ border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontFamily: font, fontSize: "11px", padding: "5px 14px", borderRadius: "4px", textDecoration: "none" }}>
+              Class Hub
+            </a>
           </div>
         </div>
 
@@ -232,6 +198,8 @@ export default function AdminPage() {
           ))}
         </div>
       </div>
+
+      <HubOutboxPanel />
 
       {/* View toggle + clear button */}
       <div style={{ background: act.contentBg, padding: "16px 36px 0", borderBottom: `1px solid ${act.border}`, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>

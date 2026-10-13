@@ -1,9 +1,3 @@
-export const PASSWORDS = {
-  "Section 1": "BLUEHILL",
-  "Section 2": "ISHIKAWA",
-  "Section 3": "ATOMIX",
-};
-
 const s1Pillars = [
   { label: "Mission & Philosophy", quote: '"Taste is personal, and online reviews should reflect that. When we evaluate anything, we ask: Does it help our mission?"' },
   { label: "What Kind of App", quote: '"We consider ourselves a social restaurant list-keeping app. Our main competitors are Google Maps, Notes, Docs, Excel."' },

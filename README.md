@@ -20,17 +20,15 @@ npm install
 vercel dev
 ```
 
-`npm start` also works for the frontend alone, but logins and rankings need the `/api` functions.
+`npm start` also works for the frontend alone, but sign-in and rankings need the `/api` functions.
 
 The app will open automatically at http://localhost:3000
 
-## Section Passwords
+## Sign-in
 
-| Section   | Password   |
-|-----------|------------|
-| Section 1 | bluehill   |
-| Section 2 | ishikawa   |
-| Section 3 | atomix     |
+Students sign in once at the class hub (Google); their section comes from the class roster.
+The app must run under the hub's cookie domain with the hub variables in `.env.example`.
+Instructors and TAs (hub roles) can open `/admin`.
 
 ## Stop the app
 

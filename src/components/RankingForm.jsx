@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { apiFetch } from "../lib/hub";
 
 const ANIM_MS = 250;
 const GAP = 6; // must match the grid gap in px
 
-export default function RankingForm({ act, studentId, section, onSubmitted }) {
+// The signed-in person's ranking for their section. `viewStudent` (staff only): show that student's
+// ranking read-only instead, by hub person id.
+export default function RankingForm({ act, section, viewStudent, onSubmitted }) {
   const options = act.options;
 
   const [order, setOrder] = useState(() => options.map(o => o.name));
@@ -11,6 +14,8 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [animating, setAnimating] = useState(false);
+  const [viewName, setViewName] = useState(null);
+  const readOnly = !!viewStudent;
 
   // Refs to each row DOM element, keyed by option name
   const rowRefs = useRef({});
@@ -18,10 +23,11 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
   useEffect(() => {
     (async () => {
       try {
-        const params = new URLSearchParams({ section, student_id: studentId });
-        const res = await fetch(`/api/submissions?${params}`);
+        const params = new URLSearchParams(viewStudent ? { section, student: viewStudent } : { section, mine: "1" });
+        const res = await apiFetch(`/api/submissions?${params}`);
         if (!res.ok) return;
-        const { submission: data } = await res.json();
+        const { submission: data, name } = await res.json();
+        if (viewStudent) setViewName(name || "Unknown student");
 
         if (data?.rankings) {
           const sorted = Object.entries(data.rankings)
@@ -29,13 +35,13 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
             .map(([name]) => name);
           setOrder(sorted);
           setSubmitted(true);
-          onSubmitted(true);
+          if (!viewStudent) onSubmitted(true);
         }
       } catch {
         // No existing submission
       }
     })();
-  }, [studentId, section]); // eslint-disable-line
+  }, [viewStudent, section]); // eslint-disable-line
 
   const move = useCallback((index, direction) => {
     const target = index + direction;
@@ -102,10 +108,10 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/submissions", {
+      const res = await apiFetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ student_id: studentId, section, rankings: toRankings() }),
+        body: JSON.stringify({ section, rankings: toRankings() }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSubmitted(true);
@@ -126,7 +132,9 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
         <div style={{ height: "1px", flex: 1, background: act.border }} />
         <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: act.muted, whiteSpace: "nowrap", fontWeight: 600 }}>
-          {submitted ? "Your Rankings (Revise Anytime)" : "Rank the Options — Reorder with Arrows"}
+          {readOnly
+            ? (viewName ? `${viewName}'s Rankings (Read-Only)` : "Loading…")
+            : submitted ? "Your Rankings (Revise Anytime)" : "Rank the Options — Reorder with Arrows"}
         </span>
         <div style={{ height: "1px", flex: 1, background: act.border }} />
       </div>
@@ -147,7 +155,7 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
                 <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "16px", fontWeight: 700, color: act.accent, minWidth: "24px", textAlign: "center" }}>
                   {i + 1}
                 </div>
-                <div className="ranking-arrows" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                {!readOnly && <div className="ranking-arrows" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                   <button
                     onClick={() => move(i, -1)}
                     disabled={isFirst || animating}
@@ -158,7 +166,7 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
                     disabled={isLast || animating}
                     style={{ width: "28px", height: "20px", border: `1px solid ${act.border}`, borderRadius: "0 0 4px 4px", background: isLast ? "#f0f0f0" : "#fff", cursor: isLast || animating ? "default" : "pointer", fontSize: "11px", color: isLast ? "#ccc" : act.accent, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   >&#9660;</button>
-                </div>
+                </div>}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "14px", fontWeight: 600, color: "#111" }}>{o.name}</div>
                   <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "12px", color: act.muted, lineHeight: "1.5", marginTop: "2px" }}>{o.desc}</div>
@@ -170,7 +178,11 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
 
         {error && <p style={{ fontFamily: "'DM Sans',sans-serif", color: "#e05555", fontSize: "12px", margin: "12px 0 0" }}>{error}</p>}
 
-        <button
+        {readOnly && viewName && !submitted && (
+          <p style={{ fontFamily: "'DM Sans',sans-serif", color: act.muted, fontSize: "12px", margin: "12px 0 0", fontStyle: "italic" }}>No ranking submitted for this section yet.</p>
+        )}
+
+        {!readOnly && <button
           onClick={handleSubmit}
           disabled={saving}
           style={{
@@ -182,7 +194,7 @@ export default function RankingForm({ act, studentId, section, onSubmitted }) {
           }}
         >
           {saving ? "Saving..." : submitted ? "Update Rankings" : "Submit Rankings"}
-        </button>
+        </button>}
       </div>
     </div>
   );
